@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { farms } from "@/db/schema";
 import { ensureStarterData } from "@/lib/bootstrap";
 
@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
+    const db = getDb();
     const body = (await request.json()) as { name?: unknown; location?: unknown };
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const location = typeof body.location === "string" ? body.location.trim() : "";
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
+    const db = getDb();
     const profile = await ensureStarterData();
     const rows = await db
       .select({ id: farms.id, name: farms.name, location: farms.location })

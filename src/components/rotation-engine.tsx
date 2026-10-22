@@ -18,42 +18,53 @@ interface RotationEngineProps {
   onPlan: (crop: Crop, plotId: number) => void;
 }
 
+type RotationRequest = {
+  plotId: number;
+  status: "ready" | "error";
+  data: RotationRecommendation | null;
+  error: string;
+};
+
 export function RotationEngine({ plots, onPlan }: RotationEngineProps) {
-  const [plotId, setPlotId] = useState<number | "">(plots[0]?.id ?? "");
-  const [recommendation, setRecommendation] = useState<RotationRecommendation | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [plotId, setPlotId] = useState<number | "">("");
+  const [request, setRequest] = useState<RotationRequest | null>(null);
+
+  const selectedPlotId = plots.some((plot) => plot.id === plotId) ? plotId : (plots[0]?.id ?? "");
+  const activePlotId = Number(selectedPlotId);
 
   useEffect(() => {
-    if (plots.length && !plots.some((plot) => plot.id === plotId)) {
-      setPlotId(plots[0].id);
-    }
-  }, [plots, plotId]);
-
-  useEffect(() => {
-    if (!plotId) {
-      setRecommendation(null);
-      return;
-    }
+    if (!activePlotId) return;
 
     const controller = new AbortController();
-    setLoading(true);
-    setError("");
-    fetch(`/api/rotation?plotId=${plotId}`, { signal: controller.signal })
+
+    fetch(`/api/rotation?plotId=${activePlotId}`, { signal: controller.signal })
       .then(async (response) => {
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error ?? "Rekomendasi belum tersedia.");
-        setRecommendation(payload as RotationRecommendation);
+        setRequest({
+          plotId: activePlotId,
+          status: "ready",
+          data: payload as RotationRecommendation,
+          error: "",
+        });
       })
       .catch((fetchError: unknown) => {
-        if (fetchError instanceof Error && fetchError.name !== "AbortError") {
-          setError(fetchError.message);
-        }
-      })
-      .finally(() => setLoading(false));
+        if (fetchError instanceof Error && fetchError.name === "AbortError") return;
+        setRequest({
+          plotId: activePlotId,
+          status: "error",
+          data: null,
+          error: fetchError instanceof Error ? fetchError.message : "Rekomendasi belum tersedia.",
+        });
+      });
 
     return () => controller.abort();
-  }, [plotId]);
+  }, [activePlotId]);
+
+  const current = request && request.plotId === activePlotId ? request : null;
+  const loading = Boolean(activePlotId) && !current;
+  const recommendation = current?.status === "ready" ? current.data : null;
+  const error = current?.status === "error" ? current.error : "";
 
   if (!plots.length) {
     return (
@@ -75,7 +86,7 @@ export function RotationEngine({ plots, onPlan }: RotationEngineProps) {
         </div>
         <label className="select-field rotation-plot-select">
           <span>Petak yang direncanakan</span>
-          <select value={plotId} onChange={(event) => setPlotId(Number(event.target.value))}>
+          <select value={selectedPlotId} onChange={(event) => setPlotId(Number(event.target.value))}>
             {plots.map((plot) => <option value={plot.id} key={plot.id}>{plot.name}</option>)}
           </select>
         </label>
@@ -137,7 +148,7 @@ export function RotationEngine({ plots, onPlan }: RotationEngineProps) {
                   <p className="recommendation-description">
                     {crop.nutrientDemand === "Rendah" ? "Ringan bagi tanah, baik setelah tanaman rakus hara." : crop.nutrientDemand === "Tinggi" ? "Tumbuh optimal dengan tanah kaya bahan organik." : "Kebutuhan hara seimbang untuk variasi musim."}
                   </p>
-                  <button type="button" className="recommendation-action" onClick={() => onPlan(crop, Number(plotId))}>
+                  <button type="button" className="recommendation-action" onClick={() => onPlan(crop, activePlotId)}>
                     Rencanakan tanaman <ArrowRight size={15} />
                   </button>
                 </article>

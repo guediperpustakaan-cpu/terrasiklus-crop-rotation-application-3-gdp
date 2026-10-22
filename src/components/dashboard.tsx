@@ -73,6 +73,11 @@ type ActionItem = {
   onClick: () => void;
 };
 type PlantingWithPlot = Planting & { plotName: string };
+type DashboardSnapshot = {
+  key: string;
+  data: DashboardData | null;
+  error: string;
+};
 
 function todayLocal() {
   const date = new Date();
@@ -131,12 +136,10 @@ function getPageTitle(view: ViewName, detail: boolean) {
 }
 
 export function Dashboard() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [activeFarmId, setActiveFarmId] = useState<number | null>(null);
+  const [snapshot, setSnapshot] = useState<DashboardSnapshot>({ key: "", data: null, error: "" });
+  const [farmChoice, setFarmChoice] = useState<number | "auto">("auto");
   const [activeView, setActiveView] = useState<ViewName>("overview");
   const [plotDetailId, setPlotDetailId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
   const [refreshVersion, setRefreshVersion] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -150,26 +153,29 @@ export function Dashboard() {
   const [soilPreferredPlotId, setSoilPreferredPlotId] = useState<number | undefined>(undefined);
   const [historyPlotFilter, setHistoryPlotFilter] = useState<number | "all">("all");
 
+  const dashboardUrl = farmChoice === "auto" ? "/api/dashboard" : `/api/dashboard?farmId=${farmChoice}`;
+  const requestKey = `${dashboardUrl}::${refreshVersion}`;
+
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
-    setLoadError("");
-    const query = activeFarmId ? `?farmId=${activeFarmId}` : "";
 
-    fetch(`/api/dashboard${query}`, { signal: controller.signal })
+    fetch(dashboardUrl, { signal: controller.signal })
       .then(async (response) => {
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error ?? "Ringkasan kebun belum dapat dimuat.");
-        setData(payload as DashboardData);
-        if (activeFarmId === null) setActiveFarmId((payload as DashboardData).selectedFarmId);
+        setSnapshot({ key: requestKey, data: payload as DashboardData, error: "" });
       })
       .catch((error: unknown) => {
-        if (error instanceof Error && error.name !== "AbortError") setLoadError(error.message);
-      })
-      .finally(() => setLoading(false));
+        if (error instanceof Error && error.name === "AbortError") return;
+        setSnapshot((current) => ({
+          key: requestKey,
+          data: current.data,
+          error: error instanceof Error ? error.message : "Ringkasan kebun belum dapat dimuat.",
+        }));
+      });
 
     return () => controller.abort();
-  }, [activeFarmId, refreshVersion]);
+  }, [dashboardUrl, requestKey]);
 
   useEffect(() => {
     if (!toast) return;
@@ -189,9 +195,13 @@ export function Dashboard() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [modal, harvestTarget]);
 
-  const plots = data?.plots ?? [];
-  const crops = data?.crops ?? [];
-  const farms = data?.farms ?? [];
+  const data = snapshot.data;
+  const loading = snapshot.key !== requestKey;
+  const loadError = snapshot.error;
+  const plots = useMemo(() => data?.plots ?? [], [data]);
+  const crops = useMemo(() => data?.crops ?? [], [data]);
+  const farms = useMemo(() => data?.farms ?? [], [data]);
+  const activeFarmId = farmChoice === "auto" ? (data?.selectedFarmId ?? null) : farmChoice;
   const activeFarm = farms.find((farm) => farm.id === activeFarmId) ?? farms[0] ?? null;
   const allPlantings = useMemo<PlantingWithPlot[]>(() =>
     plots
@@ -229,7 +239,7 @@ export function Dashboard() {
   async function saveFarm(values: { name: string; location: string }) {
     const result = await postJson<{ farm: Farm }>("/api/farms", values);
     setModal(null);
-    setActiveFarmId(result.farm.id);
+    setFarmChoice(result.farm.id);
     setActiveView("overview");
     setPlotDetailId(null);
     setRefreshVersion((version) => version + 1);
@@ -446,6 +456,7 @@ export function Dashboard() {
 
         <main className="content-area">
           {loading && <div className="refreshing-strip"><LoaderCircle size={13} className="spin" /> Memperbarui data kebun…</div>}
+          {loadError && data && <div className="inline-error"><CircleAlert size={18} />{loadError}</div>}
           <div className="page-heading-row">
             <div className="page-heading-copy">
               <div className="date-eyebrow"><CalendarDays size={14} />{dateLabel}</div>
@@ -460,7 +471,8 @@ export function Dashboard() {
                   onChange={(event) => {
                     setPlotDetailId(null);
                     setSoilPreferredPlotId(undefined);
-                    setActiveFarmId(Number(event.target.value));
+                    const nextFarmId = Number(event.target.value);
+                    setFarmChoice(nextFarmId === data?.selectedFarmId ? "auto" : nextFarmId);
                   }}
                 >
                   {farms.map((farm) => <option value={farm.id} key={farm.id}>{farm.name}</option>)}

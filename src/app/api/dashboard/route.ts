@@ -1,5 +1,5 @@
 import { desc, eq, inArray } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { crops, farms, plantFamilies, plantings, plots, soilTests } from "@/db/schema";
 import { ensureStarterData } from "@/lib/bootstrap";
 
@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
+    const db = getDb();
     const profile = await ensureStarterData();
     const url = new URL(request.url);
     const requestedFarmId = Number(url.searchParams.get("farmId"));

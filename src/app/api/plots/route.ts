@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { farms, plots } from "@/db/schema";
 import { ensureStarterData } from "@/lib/bootstrap";
 
@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
+    const db = getDb();
     const body = (await request.json()) as {
       farmId?: unknown;
       name?: unknown;

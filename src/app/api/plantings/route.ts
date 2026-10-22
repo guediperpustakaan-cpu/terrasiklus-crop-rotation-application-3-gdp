@@ -1,5 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { crops, farms, plantings, plots } from "@/db/schema";
 import { ensureStarterData } from "@/lib/bootstrap";
 
@@ -13,6 +13,7 @@ function isValidDate(value: string) {
 
 export async function POST(request: Request) {
   try {
+    const db = getDb();
     const body = (await request.json()) as {
       plotId?: unknown;
       cropId?: unknown;

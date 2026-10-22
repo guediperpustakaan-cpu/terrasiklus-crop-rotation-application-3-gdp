@@ -1,0 +1,547 @@
+{
+  "id": "d1405cc6-49a9-4982-a5cf-71b3aaf79b59",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.crops": {
+      "name": "crops",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "common_name": {
+          "name": "common_name",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "family_id": {
+          "name": "family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nutrient_demand": {
+          "name": "nutrient_demand",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "crops_common_name_unique": {
+          "name": "crops_common_name_unique",
+          "columns": [
+            {
+              "expression": "common_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "crops_family_id_idx": {
+          "name": "crops_family_id_idx",
+          "columns": [
+            {
+              "expression": "family_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "crops_family_id_plant_families_id_fk": {
+          "name": "crops_family_id_plant_families_id_fk",
+          "tableFrom": "crops",
+          "tableTo": "plant_families",
+          "columnsFrom": [
+            "family_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.farms": {
+      "name": "farms",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "farms_owner_id_idx": {
+          "name": "farms_owner_id_idx",
+          "columns": [
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "farms_owner_id_profiles_id_fk": {
+          "name": "farms_owner_id_profiles_id_fk",
+          "tableFrom": "farms",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.plant_families": {
+      "name": "plant_families",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "plant_families_name_unique": {
+          "name": "plant_families_name_unique",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.plantings": {
+      "name": "plantings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "plot_id": {
+          "name": "plot_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "crop_id": {
+          "name": "crop_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "planted_on": {
+          "name": "planted_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "harvested_on": {
+          "name": "harvested_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "plantings_plot_planted_idx": {
+          "name": "plantings_plot_planted_idx",
+          "columns": [
+            {
+              "expression": "plot_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "planted_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "plantings_crop_id_idx": {
+          "name": "plantings_crop_id_idx",
+          "columns": [
+            {
+              "expression": "crop_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "plantings_plot_id_plots_id_fk": {
+          "name": "plantings_plot_id_plots_id_fk",
+          "tableFrom": "plantings",
+          "tableTo": "plots",
+          "columnsFrom": [
+            "plot_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "plantings_crop_id_crops_id_fk": {
+          "name": "plantings_crop_id_crops_id_fk",
+          "tableFrom": "plantings",
+          "tableTo": "crops",
+          "columnsFrom": [
+            "crop_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.plots": {
+      "name": "plots",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "farm_id": {
+          "name": "farm_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "area": {
+          "name": "area",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "soil_type": {
+          "name": "soil_type",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "plots_farm_id_idx": {
+          "name": "plots_farm_id_idx",
+          "columns": [
+            {
+              "expression": "farm_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "plots_farm_id_farms_id_fk": {
+          "name": "plots_farm_id_farms_id_fk",
+          "tableFrom": "plots",
+          "tableTo": "farms",
+          "columnsFrom": [
+            "farm_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.profiles": {
+      "name": "profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "profiles_username_unique": {
+          "name": "profiles_username_unique",
+          "columns": [
+            {
+              "expression": "username",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.soil_tests": {
+      "name": "soil_tests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "plot_id": {
+          "name": "plot_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tested_on": {
+          "name": "tested_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ph": {
+          "name": "ph",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "n": {
+          "name": "n",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "p": {
+          "name": "p",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "k": {
+          "name": "k",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organic_matter": {
+          "name": "organic_matter",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "soil_tests_plot_tested_idx": {
+          "name": "soil_tests_plot_tested_idx",
+          "columns": [
+            {
+              "expression": "plot_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tested_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "soil_tests_plot_id_plots_id_fk": {
+          "name": "soil_tests_plot_id_plots_id_fk",
+          "tableFrom": "soil_tests",
+          "tableTo": "plots",
+          "columnsFrom": [
+            "plot_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

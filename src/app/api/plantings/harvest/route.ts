@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { farms, plantings, plots } from "@/db/schema";
 import { ensureStarterData } from "@/lib/bootstrap";
 
@@ -13,6 +13,7 @@ function isValidDate(value: string) {
 
 export async function POST(request: Request) {
   try {
+    const db = getDb();
     const body = (await request.json()) as { plantingId?: unknown; harvestedOn?: unknown };
     const plantingId = Number(body.plantingId);
     const harvestedOn = typeof body.harvestedOn === "string" ? body.harvestedOn : "";

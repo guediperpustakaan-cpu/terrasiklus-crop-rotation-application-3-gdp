@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import {
   crops,
   farms,
@@ -31,29 +31,61 @@ const starterCatalog = [
   { commonName: "Kemangi", familyName: "Lamiaceae", nutrientDemand: "Rendah" },
 ] as const;
 
+const DEMO_USERNAME = "sahabat-tani";
+
 function daysAgo(days: number) {
   const date = new Date();
   date.setUTCDate(date.getUTCDate() - days);
   return date.toISOString().slice(0, 10);
 }
 
-export async function ensureStarterData() {
-  await db
-    .insert(profiles)
-    .values({ username: "sahabat-tani" })
-    .onConflictDoNothing({ target: profiles.username });
+async function ensureDemoProfile() {
+  const db = getDb();
 
-  const [profile] = await db
+  const [existing] = await db
     .select({ id: profiles.id, username: profiles.username })
     .from(profiles)
-    .where(eq(profiles.username, "sahabat-tani"))
+    .where(eq(profiles.username, DEMO_USERNAME))
     .limit(1);
 
-  if (!profile) {
+  if (existing) return existing;
+
+  const inserted = await db
+    .insert(profiles)
+    .values({ username: DEMO_USERNAME })
+    .onConflictDoNothing({ target: profiles.username })
+    .returning({ id: profiles.id, username: profiles.username });
+
+  if (inserted[0]) return inserted[0];
+
+  const [raced] = await db
+    .select({ id: profiles.id, username: profiles.username })
+    .from(profiles)
+    .where(eq(profiles.username, DEMO_USERNAME))
+    .limit(1);
+
+  if (!raced) {
     throw new Error("Profil TerraSiklus tidak dapat disiapkan.");
   }
 
-  const familyNames = [...new Set(starterCatalog.map((crop) => crop.familyName))];
+  return raced;
+}
+
+async function ensureCatalog() {
+  const db = getDb();
+
+  const existingCrops = await db
+    .select({ id: crops.id, commonName: crops.commonName })
+    .from(crops);
+  const cropIds = new Map(existingCrops.map((crop) => [crop.commonName, crop.id]));
+
+  const missing = starterCatalog.filter((crop) => !cropIds.has(crop.commonName));
+
+  if (missing.length === 0) {
+    return cropIds;
+  }
+
+  const familyNames = [...new Set(missing.map((crop) => crop.familyName))];
   await db
     .insert(plantFamilies)
     .values(familyNames.map((name) => ({ name })))
@@ -62,7 +94,7 @@ export async function ensureStarterData() {
   const familyRows = await db.select().from(plantFamilies);
   const familyIds = new Map(familyRows.map((family) => [family.name, family.id]));
 
-  const cropValues = starterCatalog.map((crop) => {
+  const cropValues = missing.map((crop) => {
     const familyId = familyIds.get(crop.familyName);
     if (!familyId) {
       throw new Error(`Keluarga tanaman ${crop.familyName} tidak ditemukan.`);
@@ -74,13 +106,20 @@ export async function ensureStarterData() {
     };
   });
 
-  await db
-    .insert(crops)
-    .values(cropValues)
-    .onConflictDoNothing({ target: crops.commonName });
+  await db.insert(crops).values(cropValues).onConflictDoNothing({ target: crops.commonName });
 
-  const cropRows = await db.select().from(crops);
-  const cropIds = new Map(cropRows.map((crop) => [crop.commonName, crop.id]));
+  const refreshed = await db
+    .select({ id: crops.id, commonName: crops.commonName })
+    .from(crops);
+
+  return new Map(refreshed.map((crop) => [crop.commonName, crop.id]));
+}
+
+export async function ensureStarterData() {
+  const db = getDb();
+
+  const profile = await ensureDemoProfile();
+  const cropIds = await ensureCatalog();
 
   let [farm] = await db
     .select()
