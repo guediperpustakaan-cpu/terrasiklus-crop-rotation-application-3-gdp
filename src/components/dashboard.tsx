@@ -19,6 +19,7 @@ import {
   ChevronDown,
   CircleAlert,
   Clock3,
+  Download,
   Droplets,
   FlaskConical,
   Grid2X2,
@@ -400,6 +401,10 @@ export function Dashboard() {
         </button>
 
         <div className="sidebar-bottom">
+          <a className="sidebar-source-link" href="/terrasiklus-source.zip" download>
+            <span><Download size={14} /></span>
+            <span><strong>Unduh Source Code</strong><small>Source code lengkap TerraSiklus</small></span>
+          </a>
           <div className="sidebar-help-line"><span className="help-sprout"><Sprout size={17} /></span><span>Setiap musim adalah<br />kesempatan untuk tumbuh.</span></div>
           <div className="sidebar-user-row">
             <div className="user-avatar sidebar-avatar">R</div>
@@ -679,7 +684,13 @@ export function Dashboard() {
             </section>
           )}
 
-          <footer className="app-footer"><span>© 2026 TerraSiklus</span><span><Leaf size={13} /> Tumbuh selaras dengan alam</span><span>Dirancang untuk kebun yang lebih sehat.</span></footer>
+          <footer className="app-footer">
+            <span>© 2026 TerraSiklus</span>
+            <span><Leaf size={13} /> Tumbuh selaras dengan alam</span>
+            <span className="app-footer-tagline-soft">Dirancang untuk kebun yang lebih sehat.</span>
+            <span className="app-footer-open-source">Open Source oleh MZF - 2026</span>
+            <a className="app-footer-download" href="/terrasiklus-source.zip" download><Download size={13} /> Unduh Source Code</a>
+          </footer>
         </main>
       </div>
 
